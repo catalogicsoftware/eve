@@ -332,6 +332,9 @@ class Mongo(DataLayer):
 
         client_projection = self._client_projection(req)
 
+        if req and req.include_auth_field:
+            force_auth_field_projection = True
+
         datasource, filter_, projection, _ = self._datasource_ex(
             resource,
             lookup,
