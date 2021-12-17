@@ -260,7 +260,7 @@ def post_internal(resource, payl=None, skip_validation=False):
         # bulk insert
         ids = []
         if unique_lookup_key:
-            ids = app.data.bulk_update(resource, unique_lookup_key, documents)
+            ids, documents = app.data.bulk_update(resource, unique_lookup_key, documents)
         else:
             ids = app.data.insert(resource, documents)
 
