@@ -269,13 +269,11 @@ def post_internal(resource, payl=None, skip_validation=False):
 
         # assign document ids
         for document in documents:
-            # either return the custom ID_FIELD or the id returned by
-            # data.insert().
             # documents updated or upserted through a bulk update will always have 
             # the "_id" field set.
-            if "_id" in document:
-                document[id_field] = document['_id']
-            else:
+            if not unique_lookup_key:
+                # either return the custom ID_FIELD or the id returned by
+                # data.insert().
                 id_ = document.get(id_field, ids.pop(0))
                 document[id_field] = id_
 
