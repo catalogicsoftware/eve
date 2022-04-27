@@ -281,7 +281,10 @@ def _perform_find(resource, lookup):
     response[config.ITEMS] = documents
 
     getattr(app, "on_fetch_resource_documents")(resource, response)
-    count = len(response[config.ITEMS])
+    # TODO: Update the total count of items in the response. 
+    # Cannot set the count to the total size of the list of items becuase it 
+    # will break pagination. See KUBEDR-2908.
+    # count = len(response[config.ITEMS])
 
     if count is not None:
         headers.append((config.HEADER_TOTAL_COUNT, count))
