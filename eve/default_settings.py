@@ -177,6 +177,9 @@ SHOW_DELETED_PARAM = "show_deleted"
 INCLUDE_AUTH_FIELD_PARAM = "include_user_id"
 BULK_ENABLED = True
 
+# List of fields that will be visible only if the request is made by a system user.
+SYSTEM_USER_ONLY_VISIBLE_FIELDS = []
+
 OPLOG = False  # oplog is disabled by default.
 OPLOG_NAME = "oplog"  # default oplog resource name.
 OPLOG_ENDPOINT = None  # oplog endpoint is disabled by default.
@@ -247,6 +250,9 @@ OPTIMIZE_PAGINATION_FOR_SPEED = False
 
 # user-restricted resource access is disabled by default.
 AUTH_FIELD = None
+
+# Auth field values that are used by a system user.
+SYSTEM_USER_AUTH_FIELD_VALUES = []
 
 # don't allow unknown key/value pairs for POST/PATCH payloads.
 ALLOW_UNKNOWN = False

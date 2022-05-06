@@ -31,6 +31,7 @@ from eve.utils import (
     parse_request,
 )
 from eve.versioning import get_data_version_relation_document, resolve_document_version
+from eve.auth import auth_field_and_value
 from collections import Counter
 
 
@@ -702,6 +703,27 @@ def resolve_resource_projection(document, resource, req=None):
         if projection.get(auth_field):
             del projection[auth_field]
 
+    # Support system user only visible fields.
+    auth = resource_def["authentication"]
+    request_auth_value = auth.get_request_auth_value()
+    system_user = request_auth_value in app.config["SYSTEM_USER_AUTH_FIELD_VALUES"]
+
+    if not system_user:
+        for field in resource_def.get("system_user_only_visible_fields", []):
+            if field in document:
+                del document[field]
+                continue
+            if "." in field:
+                # Convert a dot seperated string into dictionary variable.
+                # Example:
+                # location.area -> "document["location"]["area"]"
+                to_remove = 'document["{}"]'.format(field.replace(".", '"]["'))
+                try:
+                    exec("del " + to_remove)
+                except:
+                    # Most probably given field is not found.
+                    continue
+
     fields = {
         field for field, value in projection.items() if value and field in document
     }
@@ -1215,6 +1237,28 @@ def marshal_write_response(document, resource, req=None):
             except:
                 # 'auth_field' value has not been set by the auth class.
                 pass
+
+        # Support system user only visible fields.
+        auth = resource_def["authentication"]
+        request_auth_value = auth.get_request_auth_value()
+        system_user = request_auth_value in app.config["SYSTEM_USER_AUTH_FIELD_VALUES"]
+
+        if not system_user:
+            for field in resource_def.get("system_user_only_visible_fields", []):
+                if field in document:
+                    del document[field]
+                    continue
+                if "." in field:
+                    # Convert a dot seperated string into dictionary variable.
+                    # Example:
+                    # location.area -> "document["location"]["area"]"
+                    to_remove = 'document["{}"]'.format(field.replace(".", '"]["'))
+                    try:
+                        exec("del " + to_remove)
+                    except:
+                        # Most probably given field is not found.
+                        continue
+
     return document
 
 
