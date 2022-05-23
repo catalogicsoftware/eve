@@ -675,6 +675,28 @@ def build_response_document(document, resource, embedded_fields, latest_doc=None
     resolve_embedded_documents(document, resource, embedded_fields)
 
 
+def resolve_system_user_only_visible_fields(resource_def, document):
+    auth = resource_def["authentication"]
+    request_auth_value = auth.get_request_auth_value()
+    system_user = request_auth_value in app.config["SYSTEM_USER_AUTH_FIELD_VALUES"]
+
+    if not system_user:
+        for field in resource_def.get("system_user_only_visible_fields", []):
+            if field in document:
+                del document[field]
+                continue
+            if "." in field:
+                # Convert a dot seperated string into dictionary variable.
+                # Example:
+                # location.area -> "document["location"]["area"]"
+                to_remove = 'document["{}"]'.format(field.replace(".", '"]["'))
+                try:
+                    exec("del " + to_remove)
+                except:
+                    # Most probably given field is not found.
+                    continue
+
+
 def resolve_resource_projection(document, resource, req=None):
     """Purges a document of fields that are not included in its resource
     projecton.
@@ -704,25 +726,7 @@ def resolve_resource_projection(document, resource, req=None):
             del projection[auth_field]
 
     # Support system user only visible fields.
-    auth = resource_def["authentication"]
-    request_auth_value = auth.get_request_auth_value()
-    system_user = request_auth_value in app.config["SYSTEM_USER_AUTH_FIELD_VALUES"]
-
-    if not system_user:
-        for field in resource_def.get("system_user_only_visible_fields", []):
-            if field in document:
-                del document[field]
-                continue
-            if "." in field:
-                # Convert a dot seperated string into dictionary variable.
-                # Example:
-                # location.area -> "document["location"]["area"]"
-                to_remove = 'document["{}"]'.format(field.replace(".", '"]["'))
-                try:
-                    exec("del " + to_remove)
-                except:
-                    # Most probably given field is not found.
-                    continue
+    resolve_system_user_only_visible_fields(resource_def, document)
 
     fields = {
         field for field, value in projection.items() if value and field in document
@@ -1239,25 +1243,7 @@ def marshal_write_response(document, resource, req=None):
                 pass
 
         # Support system user only visible fields.
-        auth = resource_def["authentication"]
-        request_auth_value = auth.get_request_auth_value()
-        system_user = request_auth_value in app.config["SYSTEM_USER_AUTH_FIELD_VALUES"]
-
-        if not system_user:
-            for field in resource_def.get("system_user_only_visible_fields", []):
-                if field in document:
-                    del document[field]
-                    continue
-                if "." in field:
-                    # Convert a dot seperated string into dictionary variable.
-                    # Example:
-                    # location.area -> "document["location"]["area"]"
-                    to_remove = 'document["{}"]'.format(field.replace(".", '"]["'))
-                    try:
-                        exec("del " + to_remove)
-                    except:
-                        # Most probably given field is not found.
-                        continue
+        resolve_system_user_only_visible_fields(resource_def, document)
 
     return document
 
