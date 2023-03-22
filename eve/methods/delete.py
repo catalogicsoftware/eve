@@ -11,7 +11,7 @@
 """
 
 from flask import current_app as app, abort
-from eve.utils import config, ParsedRequest
+from eve.utils import config, ParsedRequest, parse_request
 from eve.auth import requires_auth
 from eve.methods.common import (
     get_document,
@@ -216,7 +216,7 @@ def delete(resource, **lookup):
     resource_def = config.DOMAIN[resource]
     getattr(app, "on_delete_resource")(resource)
     getattr(app, "on_delete_resource_%s" % resource)()
-    default_request = ParsedRequest()
+    default_request = parse_request(resource)
     if resource_def["soft_delete"]:
         # get_document should always fetch soft deleted documents from the db
         # callers must handle soft deleted documents
