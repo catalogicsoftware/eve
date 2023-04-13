@@ -1573,4 +1573,6 @@ def oplog_push(resource, document, op, id=None):
         # notify callbacks
         getattr(app, "on_oplog_push")(resource, entries)
         # oplog push
-        app.data.insert(config.OPLOG_NAME, entries)
+        # callback functions might filter out entries, so check again if list is not empty
+        if entries:
+            app.data.insert(config.OPLOG_NAME, entries)
