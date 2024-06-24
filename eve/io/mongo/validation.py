@@ -146,6 +146,83 @@ class Validator(Validator):
             if app.data.driver.db[datasource].find_one(query):
                 self._error(field, "value '%s' is not unique" % value)
 
+    def _validate_custom_hooks_relation(self, data_relation, field, value):
+        """{'type': 'dict',
+        'schema': {
+           'resource': {'type': 'string', 'required': True},
+           'field': {'type': 'string', 'required': True},
+           'embeddable': {'type': 'boolean', 'default': False},
+           'version': {'type': 'boolean', 'default': False}
+        }}"""
+
+        if not value and self.schema[field].get("nullable"):
+            return
+
+        if "version" in data_relation and data_relation["version"] is True:
+            value_field = data_relation["field"]
+            version_field = app.config["VERSION"]
+
+            # check value format
+            if (
+                isinstance(value, dict)
+                and value_field in value
+                and version_field in value
+            ):
+                resource_def = config.DOMAIN[data_relation["resource"]]
+                if resource_def["versioning"] is False:
+                    self._error(
+                        field,
+                        "can't save a version with"
+                        " data_relation if '%s' isn't versioned"
+                        % data_relation["resource"],
+                    )
+                else:
+                    search = get_data_version_relation_document(data_relation, value)
+
+                    if not search:
+                        self._error(
+                            field,
+                            "value '%s' must exist in resource"
+                            " '%s', field '%s' at version '%s'."
+                            % (
+                                value[value_field],
+                                data_relation["resource"],
+                                data_relation["field"],
+                                value[version_field],
+                            ),
+                        )
+            else:
+                self._error(
+                    field,
+                    "versioned data_relation must be a dict"
+                    " with fields '%s' and '%s'" % (value_field, version_field),
+                )
+        else:
+            if not isinstance(value, list):
+                value = [value]
+
+            data_resource = data_relation["resource"]
+            for item in value:
+                query = {
+                    data_relation["field"]: item.id if isinstance(item, DBRef) else item
+                }
+                if not app.data.find_one(data_resource, None, **query):
+                    resource = app.data.driver.db[data_resource].find_one(query)
+                    if resource:
+                        # Check if hook is builtin hook
+                        if resource.get("cc_user_email") and resource["cc_user_email"] == "cloudcasa-system-user@cloudcasa.io":
+                            return
+                    self._error(
+                        field,
+                        "value '%s' must exist in resource"
+                        " '%s', field '%s'."
+                        % (
+                            item.id if isinstance(item, DBRef) else item,
+                            data_resource,
+                            data_relation["field"],
+                        ),
+                    )
+
     def _validate_data_relation(self, data_relation, field, value):
         """{'type': 'dict',
         'schema': {
