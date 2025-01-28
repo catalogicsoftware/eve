@@ -16,7 +16,7 @@ INSTALL_REQUIRES = [
     "cerberus>=1.1,<2.0",
     "events>=0.3,<0.4",
     "flask",
-    "pymongo<3.11.0",
+    "pymongo<4.11.0",
     "simplejson>=3.3.0,<4.0",
 ]
 
