@@ -923,7 +923,11 @@ class Mongo(DataLayer):
             try:
                 return datetime.strptime(v, config.DATE_FORMAT)
             except:
-                if k in (id_field, id_field_versioned) or should_parse_objectid:
+                # Get the auth field from config
+                auth_field = config.AUTH_FIELD
+                
+                # Check if field is ID field, versioned ID field, or auth field
+                if k in (id_field, id_field_versioned) or k == auth_field or should_parse_objectid:
                     try:
                         # Convert to unicode because ObjectId() interprets
                         # 12-character strings (but not unicode) as binary
