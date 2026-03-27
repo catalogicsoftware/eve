@@ -57,7 +57,7 @@ def patch(resource, payload=None, **lookup):
 def patch_internal(
     resource,
     payload=None,
-    concurrency_check=False,
+    concurrency_check=True,
     skip_validation=False,
     mongo_options=None,
     **lookup
